@@ -1,5 +1,6 @@
 package com.Models;
 
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
@@ -7,7 +8,7 @@ import java.sql.Statement;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
-public class Employee extends User{
+public class Employee extends User implements Serializable{
     Database dataBase= new Database();
 	
 	public Employee(String username, String password ) {
@@ -26,7 +27,7 @@ public class Employee extends User{
 	
 	public void submitTicket(Ticket ticket) {
 	  
-	 dataBase.insertTicket(ticket);
+	 dataBase.insertTicket(this,ticket);
     
 	}
 }
