@@ -1,10 +1,18 @@
 package com.Models;
-
+ 
 import java.io.File;
+import java.io.FileReader;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
+
 
 import org.eclipse.jetty.server.session.DatabaseAdaptor;
 import org.eclipse.jetty.server.session.DefaultSessionCache;
@@ -13,101 +21,254 @@ import org.eclipse.jetty.server.session.JDBCSessionDataStoreFactory;
 import org.eclipse.jetty.server.session.SessionCache;
 import org.eclipse.jetty.server.session.SessionHandler;
 
+import com.Revature.util.ConnectionFactory;
+
+
+
+
 public class Database implements Serializable{
+  PreparedStatement stmt = null;  
+  ResultSet set = null;
+  
   public Database() {}
   
   public void insertTicket(Employee employee,Ticket ticket){
-    Connection c = null;
-    Statement stmt = null;
-    try {
+     
+    
+    try (Connection conn = ConnectionFactory.getConnection()){
 
-       c = DriverManager
-          .getConnection("jdbc:postgresql://localhost:5432/mydatabase",
-          "postgres", "password");
-       System.out.println("Opened database successfully");
-
-       stmt = c.createStatement();
-       String sql = "INSERT INTO Tickets (Status, Amount, Description,employeeusername) "
-                   +"VALUES('" + ticket.getStatus()+"'"
-                   + ", '"+Double.toString(ticket.getAmount())+"'"
-                   + ", '"+ticket.getDescription() + "'"
-                   + ", '"+ employee.getUserName() +"'"
-                   +");";
-       stmt.executeUpdate(sql);
-       stmt.close();
-       c.close();
+       final String str=  "INSERT INTO Tickets (Status, Amount, Description,employeeusername) "
+                       + "VALUES (?,?,?,?)";
+       
+       stmt = conn.prepareStatement(str);
+       stmt.setString(1, ticket.getStatus() );
+       stmt.setDouble(2,ticket.getAmount() );
+       stmt.setString(3,ticket.getDescription() );
+       stmt.setString(4, employee.getUserName() );
+        
+       stmt.execute(); 
+      
     } catch ( Exception e ) {
        System.err.println( e.getClass().getName()+": "+ e.getMessage() );
-       System.exit(0);
+       
+    }finally {
+      try {
+        stmt.close();
+      } catch (SQLException e) { 
+        e.printStackTrace();
+      }
     }
   }
   
-  public boolean insertUser(User user){
-    Connection c = null;
-    Statement stmt = null;
-    try {
-
-       c = DriverManager
-          .getConnection("jdbc:postgresql://localhost:5432/mydatabase",
-          "postgres", "password");
+  public void insertUser(User user){
+   
+    PreparedStatement stmt = null; 
+    try(Connection c = ConnectionFactory.getConnection())  { 
+      
        System.out.println("Opened database successfully");
-
-       stmt = c.createStatement();
  
-       String sql= "INSERT INTO Users (UserName,passsword,role) VALUES("
-           + SQLquote(user.getUserName())
-           + ","+SQLquote(user.getPassword())
-           + ","+SQLquote(user.getRole())
-           + ");";
-       
-       sql= "INSERT INTO Employees (UserName) VALUES("
-           + SQLquote(user.getUserName()) 
-           + ");";
-       
-       stmt.executeUpdate(sql);
-       stmt.close();
-       c.close();
-    } catch ( Exception e ) {
-        return false;
-//       System.err.println( e.getClass().getName()+": "+ e.getMessage() ); 
-        }
-    
-    return true;
-  }
-  
-  public String SQLquote(String word) {
-    return "'"+word+"'";
-  }
-  
-  public static SessionHandler sqlSessionHandler(String driver, String url) {
-    SessionHandler sessionHandler = new SessionHandler();
-    SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
-    sessionCache.setSessionDataStore(
-        jdbcDataStoreFactory(driver, url).getSessionDataStore(sessionHandler)
-    );
-    sessionHandler.setSessionCache(sessionCache);
-    sessionHandler.setHttpOnly(true);
-    // make additional changes to your SessionHandler here
-    return sessionHandler;
-}
+         
+       final String str=  "INSERT INTO Users (UserName,passsword,role) VALUES(?,?,?)";
 
-  private static JDBCSessionDataStoreFactory jdbcDataStoreFactory(String driver, String url) {
-    DatabaseAdaptor databaseAdaptor = new DatabaseAdaptor();
-    databaseAdaptor.setDriverInfo(driver, url);
-    // databaseAdaptor.setDatasource(myDataSource); // you can set data source here (for connection pooling, etc)
-    JDBCSessionDataStoreFactory jdbcSessionDataStoreFactory = new JDBCSessionDataStoreFactory();
-    jdbcSessionDataStoreFactory.setDatabaseAdaptor(databaseAdaptor);
-    return jdbcSessionDataStoreFactory;
+      stmt = c.prepareStatement(str);
+      stmt.setString(1, user.getUserName() );
+      stmt.setString(2, user.getPassword());
+      stmt.setString(3, user.getRole());
+      
+      stmt.execute();   
+      
+   }catch(SQLException e) {
+       e.printStackTrace();
+   } finally { 
+       try {
+         stmt.close();  
+       } catch (SQLException e1) { 
+        e1.printStackTrace();
+       }
+  }
+    
+   
+ }
+  
+  
+  
+  public void insertEmployee(Employee e) {
+      
+      try(Connection c = ConnectionFactory.getConnection())  
+      {  
+  
+        final String str=  "INSERT INTO Employees (UserName) VALUES(?)";
+  
+        stmt = c.prepareStatement(str);
+        stmt.setString(1, e.getUserName() ); 
+        
+        stmt.execute();   
+      
+     }catch(SQLException ex) {
+         ex.printStackTrace();
+     } finally { 
+         try {
+           stmt.close();  
+         } catch (SQLException e1) { 
+          e1.printStackTrace();
+         }
+    }
+  }
+  
+ 
+  public boolean isUserNameValid(String username) { 
+		Connection conn = null;
+		try { 
+			// Make Connection
+			conn = ConnectionFactory.getConnection();
+			
+			final String str=  "SELECT * FROM users where username = ?" ;
+
+            stmt = conn.prepareStatement(str);
+            stmt.setString(1, username );
+           
+			set = stmt.executeQuery();
+ 
+			if ( set.next() ) {
+			  return true;
+			}
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {  
+          e.printStackTrace();
+        } 
+		finally {
+
+			try {
+				conn.close();
+				set.close();
+				stmt.close();
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+
+		return false;
+	}
+  
+  public boolean isEmployee(String username) { 
+    Connection conn = null;
+    try { 
+        // Make Connection
+        conn = ConnectionFactory.getConnection();
+        
+        final String str=  "SELECT * FROM Employees WHERE username = ?" ;
+
+        stmt = conn.prepareStatement(str);
+        stmt.setString(1, username );
+       
+        set = stmt.executeQuery();
+
+        if ( set.next() ) {
+          return true;
+        }
+    } 
+    catch (SQLException e) {
+        e.printStackTrace();
+    } catch (Exception e) {  
+      e.printStackTrace();
+    } 
+    finally {
+
+        try {
+            conn.close();
+            set.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    return false;
 }
+  
+  
+  public boolean isPasswordValid(String username,String inputPassword) {
+    
+    ResultSet set = null;
+    PreparedStatement stmt = null;
+    Connection conn = null;
+
+    try { 
+
+        conn = ConnectionFactory.getConnection();
+        
+        final String str=  "SELECT * FROM users where username = ?" ;
+
+        stmt = conn.prepareStatement(str);
+        stmt.setString(1, username );
+       
+        set = stmt.executeQuery();
+
+        if ( set.next() ) {
+          String realPassword= set.getString(2);
+          
+          if ( inputPassword.equals(realPassword))
+            return true;
+        }
+    } 
+    catch (SQLException e) {
+        e.printStackTrace();
+    } catch (Exception e) {  
+      e.printStackTrace();
+    } 
+    finally {
+
+        try {
+            conn.close();
+            set.close();
+            stmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    
+    return false;
+  }
+  
+  
+
+  
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   public static SessionHandler fileSessionHandler() {
+    System.out.println("Gets Here");
     SessionHandler sessionHandler = new SessionHandler();
     SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
     sessionCache.setSessionDataStore(fileSessionDataStore());
     sessionHandler.setSessionCache(sessionCache);
     sessionHandler.setHttpOnly(true);
     // make additional changes to your SessionHandler here
-   
+    System.out.println("MY sesssion :"+sessionHandler);
     return sessionHandler;
 }
 
@@ -118,7 +279,7 @@ public class Database implements Serializable{
     storeDir.mkdir();
     fileSessionDataStore.setStoreDir(storeDir);
     return fileSessionDataStore;
-  }
+}
 
 
 }

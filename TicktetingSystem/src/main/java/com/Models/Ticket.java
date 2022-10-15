@@ -4,7 +4,7 @@ public class Ticket {
   private String status;
   private String description;
   private double amount;
-  private String employeeUserName;
+ 
 
   public Ticket() {
     this.setPendingStatus();
@@ -57,12 +57,6 @@ public class Ticket {
     return "Ticket [status=" + status + ", amount=" + amount + ", description=" + description + "]";
   }
 
-  public String getEmployeeUserName() {
-    return employeeUserName;
-  }
 
-  public void setEmployeeUserName(String employeeUserName) {
-    this.employeeUserName = employeeUserName;
-  }
 
 }

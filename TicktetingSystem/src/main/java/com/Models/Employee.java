@@ -15,6 +15,10 @@ public class Employee extends User implements Serializable{
 		super(username,password);
 	}
 	
+	public Employee(String username ) {
+      super(username,"");
+  }
+	
 	public void requestReimbursement() {
 		
 		System.out.println("Reimburstment start");
