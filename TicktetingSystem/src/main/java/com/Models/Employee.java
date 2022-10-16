@@ -8,7 +8,7 @@ import java.sql.Statement;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
-public class Employee extends User implements Serializable{
+public class Employee extends User{
     Database dataBase= new Database();
 	
 	public Employee(String username, String password ) {
@@ -17,7 +17,7 @@ public class Employee extends User implements Serializable{
 	
 	public Employee(String username ) {
       super(username,"");
-  }
+    }
 	
 	public void requestReimbursement() {
 		
@@ -29,9 +29,9 @@ public class Employee extends User implements Serializable{
 		return ticket.toString();
 	}
 	
-	public void submitTicket(Ticket ticket) {
-	  
-	 dataBase.insertTicket(this,ticket);
-    
-	}
+//	public void submitTicket(Ticket ticket) {
+//	  
+//	 dataBase.insertTicket(this,ticket);
+//    
+//	}
 }

@@ -1,13 +1,18 @@
 CREATE TABLE Users (
-  	UserName varchar(20),
+  	UserName varchar(20) UNIQUE,
   	passsword varchar(20),
 	role varchar(20),
 	PRIMARY KEY (UserName)
 	
 );
- 
- 
+  
 CREATE TABLE Employees( 
+	UserName varchar(20),
+	PRIMARY KEY(UserName), 
+	FOREIGN KEY(UserName) REFERENCES Users(UserName)
+);
+
+CREATE TABLE Managers( 
 	UserName varchar(20),
 	PRIMARY KEY(UserName), 
 	FOREIGN KEY(UserName) REFERENCES Users(UserName)
@@ -24,21 +29,43 @@ CREATE TABLE Tickets (
 
 
 INSERT INTO Users (UserName,passsword,role)
-VALUES('bryan','password2','employee2');
+VALUES('bryan','password2','employee');
 
 INSERT INTO Employees (UserName)
-VALUES('username1');
+VALUES('bryan');
+
 
 
 INSERT INTO Tickets (Status, Amount, Description,employeeusername)
-VALUES('status1',21.9, 'description','username1');
+VALUES('pending',21.9, 'description','bryan');
+
+INSERT INTO Tickets (Status, Amount, Description,employeeusername)
+VALUES('pending','21.9', 'description','bryan');
+
+--Adding manager
+
+
+INSERT INTO Users (UserName,passsword,role)
+VALUES('Kevin','password2','manager');
+
+INSERT INTO Managers (UserName)
+VALUES('Kevin');
 
 
 
-SELECT * FROM Users;
+SELECT * FROM Employees WHERE username = 'kim';
+
+
+SELECT * FROM Users; 
+SELECT * FROM Managers;
 SELECT * FROM Employees;
+
 SELECT * FROM Tickets;
 
+
+
+
 DROP TABLE Tickets;
+DROP TABLE Managers;
 DROP TABLE employees;
 DROP TABLE Users;

@@ -5,16 +5,19 @@ import java.io.Serializable;
 public class User implements Serializable{
 	private String userName;
 	private String password;
-	private String role;
+	private String role="employee";
 	
 	public User() {}
 
 	public User(String userName, String password) {
 		this.userName = userName;
-		this.password = password;
+		this.password = password; 
 	}
 	
-	public boolean isUserValid() {
+	
+	
+
+  public boolean isUserValid() {
 		System.out.println("Validation implementation needed!!");
 		return true;
 	}

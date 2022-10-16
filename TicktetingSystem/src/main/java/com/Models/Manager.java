@@ -1,11 +1,16 @@
 package com.Models;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class Manager extends User {
 	
 	public Manager(String username, String password ) {
-		super(username,password);
+	  super(username,password);
+	}
+	
+	public Manager(String username ) {
+	      super(username,"");
 	}
 	
 	public List<Ticket> viewPendingTickets() {
