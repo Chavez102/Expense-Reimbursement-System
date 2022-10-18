@@ -210,9 +210,8 @@ public class Database implements Serializable{
     
   }
   
-  
 
-  public List<Ticket> executeFindTiccketsStatemetn(String str,String...args) {
+  public List<Ticket> executeFindTicketsStatemetn(String str,String...args) {
     
     List<Ticket> ticketList = new ArrayList<>();
     ResultSet set = null; 
@@ -264,23 +263,22 @@ public class Database implements Serializable{
   }
    
   
-  
   public void deletePendingTicket(int ticketId){ 
     
-    executeStatement("DELETE FROM Tickets WHERE TicketId=?", Integer.toString(ticketId));
+    executeStatement("DELETE FROM PendingTickets WHERE TicketId=?", Integer.toString(ticketId));
 
   }
   
   public  Ticket getPendingTicket(int ticketId){ 
    
-    List<Ticket> ticketList= executeFindTiccketsStatemetn("SELECT * FROM tickets WHERE ticketid=?",Integer.toString(ticketId));
+    List<Ticket> ticketList= executeFindTicketsStatemetn("SELECT * FROM PendingTickets WHERE ticketid=?",Integer.toString(ticketId));
     return ticketList.get(0);
 
   }
   
   public void insertPendingTicket(Employee employee,Ticket ticket){ 
     
-    String str=  "INSERT INTO Tickets (Status, Amount, Description,employeeusername) VALUES (?,?,?,?)";
+    String str=  "INSERT INTO PendingTickets (Status, Amount, Description,employeeusername) VALUES (?,?,?,?)";
     executeStatement(str,
         ticket.getStatus(),
         Double.toString( ticket.getAmount() ),

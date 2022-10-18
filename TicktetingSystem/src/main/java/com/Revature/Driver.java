@@ -22,7 +22,7 @@ public class Driver {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) { 
+    public static void main(String[] args) { 
 		
 	    System.out.println("Start"); 
 	    Database database= new Database();
@@ -34,28 +34,43 @@ public class Driver {
 		}).start(8000); 
 		
 	
-		 
+	//Permissions for all Users	 
 		app.get("/SignUp", (Context ctx) ->{ 
 		    signUp(ctx,database);
 		}); 
-		
+	//Permissions for both Employees and Managers
 		app.get("/LogIn", (Context ctx) ->{  
 		  logIn(ctx,database);
         });  
-
 		
+		app.get("/LogOut", (Context ctx) ->{  
+          logOut(ctx,database); 
+        });
+
+	//Permissions for Employees
 		app.post("/ticketSubmimssion", (Context ctx) ->{
 		  submitTicket(ctx,database); 
         });
-		 
-		app.get("/LogOut", (Context ctx) ->{  
-		    logOut(ctx,database); 
-	    });
 		
+		app.get("/viewEmployeeProcesedTickets", (Context ctx) ->{
+		  viewEmployeeProcesedTickets(ctx,database); 
+        });
+		
+		app.get("/viewEmployeePendingTickets", (Context ctx) ->{
+		  viewEmployeePendingTickets(ctx,database); 
+        });
+		
+		
+		 
+	//Permissions for Managers
 		app.get("/ViewPendingTickets", (Context ctx) ->{  
             viewPendingTickets(ctx,database); 
         });
 		
+		app.get("/ViewProcessedTickets", (Context ctx) ->{  
+		  viewProcessedTickets(ctx,database); 
+      });
+	
 		app.put("/ProcessTicket", (Context ctx) ->{  
           processTicket(ctx,database); 
       });
@@ -64,7 +79,7 @@ public class Driver {
 		
 		
 	} 
-
+    //Permissions for all Users 
     public static void signUp(Context ctx,Database database) {
 	  String serverResponse=null; 
       User user= ctx.bodyAsClass(User.class);  
@@ -99,6 +114,7 @@ public class Driver {
 
     }
 
+    //Permissions for both Employees and Managers
 	public static void logIn(Context ctx,Database database) {
 	  
 	  String serverResponse=null;
@@ -143,33 +159,32 @@ public class Driver {
 	  
 	}
 
-	public static void submitTicket(Context ctx,Database database) {
-      System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+	public static void logOut(Context ctx,Database database) {
       String username= ctx.sessionAttribute("username_key") ;
       
+      String serverResponse ="BYE : "+ username ; 
+      ctx.req().getSession().invalidate();;
+      
+      System.out.println(serverResponse); 
+      ctx.result(serverResponse);
+	}
+	
+	
+	
+	
+	//Permissions for Employees
+	public static void submitTicket(Context ctx,Database database) {
+      System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+      String userName= ctx.sessionAttribute("username_key") ;
+      
       String serverResponse="";
-      //check if logged in
-      if ( ! ctx.req().isRequestedSessionIdValid() ) {
-           serverResponse = "You are not logged in";
-           System.out.println(serverResponse);
-           ctx.result(serverResponse);
-           return ;
-      }
-      
-      //check if user is Employee
-      if (! database.isEmployee(username)) {
-        serverResponse = "You are not an Employee";
-        System.out.println(serverResponse);
-        ctx.result(serverResponse);
+      if (! userHasEmployeePermissions(ctx,database,userName)) {
         return ;
-      }
-      
+      } 
        
       System.out.println("ticket submission start"); 
       Ticket ticket= ctx.bodyAsClass(Ticket.class); 
-      
-      
-      
+       
       Employee e = (Employee)ctx.sessionAttribute("role_key"); 
       database.insertPendingTicket(e,ticket);
       
@@ -181,68 +196,87 @@ public class Driver {
       //httpSession 
       System.out.println("httpSession ID: "+s.getId());
 	}
-
-	public static void logOut(Context ctx,Database database) {
-	     String username= ctx.sessionAttribute("username_key") ;
-         
-         String serverResponse ="BYE : "+ username ; 
-         ctx.req().getSession().invalidate();;
-         
-         System.out.println(serverResponse); 
-         ctx.result(serverResponse);
-	}
- 
+	
+	
+	
+	 private static void viewEmployeePendingTickets(Context ctx, Database database) {
+	      System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+	      String userName= ctx.sessionAttribute("username_key") ;
+	       
+	      //check if logged in
+	      if (! userHasEmployeePermissions(ctx,database,userName)) {
+	        return ;
+	      }
+	      
+	      List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM pendingtickets WHERE employeeusername = ?",userName);
+	      
+	      System.out.println(ticketList);
+	      
+	      ctx.result(ticketList.toString()); 
+	    }
+	
+	 private static void viewEmployeeProcesedTickets(Context ctx, Database database) {
+       System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+       String userName= ctx.sessionAttribute("username_key") ;
+        
+       //check if logged in
+       if (! userHasEmployeePermissions(ctx,database,userName)) {
+         return ;
+       }
+       
+       List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM processedtickets WHERE employeeusername = ?",userName);
+       
+       System.out.println(ticketList);
+       
+       ctx.result(ticketList.toString()); 
+     }
+	
+	
+	
+	
+	
+	
+	
+	//Permissions for Managers
 	private static void viewPendingTickets(Context ctx, Database database) {
-	  System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
-      String username= ctx.sessionAttribute("username_key") ;
-      
-      String serverResponse="";
+      System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+      String userName= ctx.sessionAttribute("username_key") ;
+       
       //check if logged in
-      if ( ! ctx.req().isRequestedSessionIdValid() ) {
-           serverResponse = "You are not logged in";
-           System.out.println(serverResponse);
-           ctx.result(serverResponse);
-           return ;
-      }
-      
-      //check if user is manager
-      if (! database.isManager(username)) {
-        serverResponse = "You are not a Manager";
-        System.out.println(serverResponse);
-        ctx.result(serverResponse);
+      if (! userHasManagerPermissions(ctx,database,userName)) {
         return ;
       }
       
-      List<Ticket> ticketList= database.executeFindTiccketsStatemetn("SELECT * FROM tickets");
+      List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM PendingTickets");
       
       System.out.println(ticketList);
       
-	  ctx.result(ticketList.toString());
-	  
-	  
-	}
+      ctx.result(ticketList.toString()); 
+    }
+	
 
-
-	private static void processTicket(Context ctx, Database database) {
-	  System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
-      String username= ctx.sessionAttribute("username_key") ;
-      
-      String serverResponse="";
+	private static void viewProcessedTickets(Context ctx, Database database) {
+      System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+      String userName= ctx.sessionAttribute("username_key") ;
+       
       //check if logged in
-      if ( ! ctx.req().isRequestedSessionIdValid() ) {
-           serverResponse = "You are not logged in";
-           System.out.println(serverResponse);
-           ctx.result(serverResponse);
-           return ;
-      }
-      
-      //check if user is manager
-      if (! database.isManager(username)) {
-        serverResponse = "You are not a Manager";
-        System.out.println(serverResponse);
-        ctx.result(serverResponse);
+      if (! userHasManagerPermissions(ctx,database,userName)) {
         return ;
       }
+      
+      List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM ProcessedTickets");
+      
+      System.out.println(ticketList); 
+      ctx.result(ticketList.toString()); 
+    }
+	
+	private static void processTicket(Context ctx, Database database) {
+	  System.out.println("my username is: "+ ctx.sessionAttribute("username_key"));
+      String userName= ctx.sessionAttribute("username_key") ;
+       
+      if (! userHasManagerPermissions(ctx,database,userName)) {
+        return ;
+      } 
       
       Ticket ticket= ctx.bodyAsClass(Ticket.class); 
       
@@ -252,7 +286,7 @@ public class Driver {
       ticket= database.getPendingTicket(ticketId);
       ticket.setStatus(newStatus);
       
-      //remove ticket from tickets table
+      //remove ticket from PendingTickets table
       database.deletePendingTicket(ticket.getId()); 
       
       //add ticket to ProcessedTickets
@@ -261,7 +295,48 @@ public class Driver {
 	   
 	}
 
+	
+	//Login Verification Process
+	private static boolean userHasManagerPermissions(Context ctx,Database database, String userName) {
+	  String serverResponse="";
+	  //check if logged in
+      if ( ! ctx.req().isRequestedSessionIdValid() ) {
+           serverResponse = "You are not logged in";
+           System.out.println(serverResponse);
+           ctx.result(serverResponse);
+           return false;
+      }
+      
+      //check if user is manager
+      if (! database.isManager(userName)) {
+        serverResponse = "You are not a Manager";
+        System.out.println(serverResponse);
+        ctx.result(serverResponse);
+        return false;
+      }
+      return true;
+	  
+	}
 
-
-
+	
+	private static boolean userHasEmployeePermissions(Context ctx,Database database, String userName) {
+      String serverResponse="";
+      //check if logged in
+      if ( ! ctx.req().isRequestedSessionIdValid() ) {
+           serverResponse = "You are not logged in";
+           System.out.println(serverResponse);
+           ctx.result(serverResponse);
+           return false;
+      }
+      
+      //check if user is Employee
+      if (! database.isEmployee(userName)) {
+        serverResponse = "You are not an Employee";
+        System.out.println(serverResponse);
+        ctx.result(serverResponse);
+        return false;
+      }
+      return true;
+      
+    }
 }
