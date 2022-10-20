@@ -66,9 +66,7 @@ public class Database implements Serializable{
    }
     
  }
-  
-  
-  
+   
   public List<User> executeFindUsersStatemetn(String str,String...args) {
     
     List<User> userList = new ArrayList<>();
@@ -269,10 +267,29 @@ public class Database implements Serializable{
 
   }
   
+  public void UpdateEmployee (String EmployeeUsername){ 
+    executeStatement("DELETE FROM pendingtickets WHERE  employeeusername =?", EmployeeUsername);
+    executeStatement("DELETE FROM employees WHERE username = ?", EmployeeUsername);
+    executeStatement("INSERT INTO Managers (UserName) VALUES(?)", EmployeeUsername);
+    executeStatement("UPDATE users SET role='manager' WHERE username = ?", EmployeeUsername);
+    
+  }
+  
+  public void UpdateManager (String EmployeeUsername){ 
+    executeStatement("UPDATE users SET role='employee' WHERE username = ?", EmployeeUsername);
+    executeStatement("DELETE FROM Managers  WHERE username = ?", EmployeeUsername);
+    executeStatement("INSERT INTO employees (UserName) VALUES(?)", EmployeeUsername);
+    
+  }
+  
   public  Ticket getPendingTicket(int ticketId){ 
    
     List<Ticket> ticketList= executeFindTicketsStatemetn("SELECT * FROM PendingTickets WHERE ticketid=?",Integer.toString(ticketId));
+    if (ticketList.size()==0) { 
+      return null;
+    } 
     return ticketList.get(0);
+    
 
   }
   
@@ -395,48 +412,6 @@ public class Database implements Serializable{
   } 
 
 
- 
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  public static SessionHandler fileSessionHandler() {
-    System.out.println("Gets Here");
-    SessionHandler sessionHandler = new SessionHandler();
-    SessionCache sessionCache = new DefaultSessionCache(sessionHandler);
-    sessionCache.setSessionDataStore(fileSessionDataStore());
-    sessionHandler.setSessionCache(sessionCache);
-    sessionHandler.setHttpOnly(true);
-    // make additional changes to your SessionHandler here
-    System.out.println("MY sesssion :"+sessionHandler);
-    return sessionHandler;
-}
-
-  private static FileSessionDataStore fileSessionDataStore() {
-    FileSessionDataStore fileSessionDataStore = new FileSessionDataStore();
-    File baseDir = new File(System.getProperty("java.io.tmpdir"));
-    File storeDir = new File(baseDir, "javalin-session-store");
-    storeDir.mkdir();
-    fileSessionDataStore.setStoreDir(storeDir);
-    return fileSessionDataStore;
-}
   
   
 
