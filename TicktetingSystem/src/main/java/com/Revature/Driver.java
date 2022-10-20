@@ -170,11 +170,13 @@ public class Driver {
       if (userHasManagerPermissions(ctx,database,userName)) {
         List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM PendingTickets");
         
-        ctx.result(ticketList.toString());  
+        //ctx.result(ticketList.toString());  
+        ctx.json(ticketList);
       }else if (userHasEmployeePermissions(ctx,database,userName)) {
         List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM pendingtickets WHERE employeeusername = ?",userName);
          
-        ctx.result(ticketList.toString());  
+        //ctx.result(ticketList.toString());  
+        ctx.json(ticketList);
       } 
     }
 	
@@ -186,11 +188,16 @@ public class Driver {
 	      if ( userHasManagerPermissions(ctx,database,userName)) {
 	        List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM ProcessedTickets"); 
 	        System.out.println(ticketList); 
-	        ctx.result(ticketList.toString());  
+//	        ctx.result(ticketList.toString()); 
+	        ctx.json(ticketList);
 	      }else if (userHasEmployeePermissions(ctx,database,userName)) {
 	        List<Ticket> ticketList= database.executeFindTicketsStatemetn("SELECT * FROM processedtickets WHERE employeeusername = ?",userName); 
-	        ctx.result(ticketList.toString()); 
+//	        ctx.result(ticketList.toString()); 
+	        
+	        ctx.json(ticketList);
 	      }
+	      
+	     
 	      
 	      
 	    }
@@ -268,9 +275,9 @@ public class Driver {
     private static void changeRole(Context ctx, Database database) {
       User user= ctx.bodyAsClass(User.class);
       String newRole = user.getRole();
-      String response="updated employee";
+      String response="updated User";
       
-      if (! userHasEmployeePermissions(ctx,database,user.getUserName())) {
+      if (! userHasManagerPermissions(ctx,database,ctx.sessionAttribute("username_key") )) {
         return;
       }
       
@@ -291,7 +298,7 @@ public class Driver {
       
       if(database.isEmployee(user.getUserName())) {
         if(newRole.equalsIgnoreCase("employee")) {
-          response = user.getUserName()+"is already an "+ newRole;
+          response = user.getUserName()+" is already an "+ newRole;
           ctx.result(response);
           return;
         }
@@ -300,12 +307,13 @@ public class Driver {
         ctx.result(response);
       }else if(database.isManager(user.getUserName())) {
         if(newRole.equalsIgnoreCase("manager")) {
-          response = user.getUserName()+"is already a "+ newRole;
+          response = user.getUserName()+" is already a "+ newRole;
           ctx.result(response);
           return;
         }
         
         database.UpdateManager(user.getUserName());
+        ctx.result(response);
       }
     
     }
