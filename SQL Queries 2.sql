@@ -97,8 +97,29 @@ SELECT * FROM Employees;
 SELECT * FROM pendingtickets ;
 SELECT * FROM processedtickets ;
 
+--Change role of EMployee
+	--UPDATE users SET role='manager' WHERE username = 'bryan'
+	--
+	--DELETE FROM pendingtickets WHERE  employeeusername ='bryan';
+	--DELETE FROM employees  WHERE username = 'bryan';
+	--
+	--INSERT INTO Managers (UserName) VALUES('bryan');
+	--
+	--UPDATE users SET role='manager' WHERE username = 'bryan'
+
+--Change role of Manager
+	UPDATE users SET role='employee' WHERE username = 'Kevin';
+	
+	
+	DELETE FROM Managers  WHERE username = 'Kevin';
+	
+	INSERT INTO employees (UserName) VALUES('Kevin');
+	
+	
 
 
+	
+	
 
 DROP TABLE pendingtickets;
 DROP TABLE processedtickets;
